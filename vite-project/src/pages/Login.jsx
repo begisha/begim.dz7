@@ -1,21 +1,29 @@
 import { Form, Input, Button, Card, Typography, message } from 'antd';
 import { useAuthStore } from "../store/authStore";
 import { useNavigate, Link } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { loginRequest } from "../api/auth";
 
 const { Title, Text } = Typography;
 
 export default function Login() {
-  const { login, isLoading } = useAuthStore();
+  const setAuth = useAuthStore((state) => state.setAuth);
   const navigate = useNavigate();
 
-  const onFinish = async (values) => {
-    try {
-      await login(values);
-      message.success('Welcomeeeeee !');
+  const loginMutation = useMutation({
+    mutationFn: loginRequest,
+    onSuccess: (data) => {
+      setAuth(data);
+      message.success('Welcomeeeeee!');
       navigate('/');
-    } catch (err) {
+    },
+    onError: () => {
       message.error('Ошибка входа. Проверьте данные');
     }
+  });
+
+  const onFinish = (values) => {
+    loginMutation.mutate(values);
   };
 
   return (
@@ -58,7 +66,14 @@ export default function Login() {
             <Input.Password size="large" placeholder="******" />
           </Form.Item>
 
-          <Button type="primary" htmlType="submit" block size="large" loading={isLoading} style={{ borderRadius: 8 }}>
+          <Button 
+            type="primary" 
+            htmlType="submit" 
+            block 
+            size="large" 
+            loading={loginMutation.isPending} 
+            style={{ borderRadius: 8 }}
+          >
             Войти
           </Button>
 
